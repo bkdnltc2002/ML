@@ -1,0 +1,65 @@
+version: "2"
+
+services:
+  service-dev:
+    build:
+      context: ./src
+      dockerfile: ./Dockerfile
+      target: development
+    image: app-server-image-dev
+    container_name: app-server-container-dev
+    profiles:
+      - dev
+    ports:
+      - 8001:8001
+    # environment:
+    #   - PORT=${PORT}
+    env_file:
+      - ./.env
+    depends_on:
+      - postgres-db
+    links:
+      - postgres-db
+    volumes:
+      - ./src/app:/app
+      - ./src/logs:/var/logs
+      - ./static:/static
+
+  postgres-db:
+    container_name: postgres-db
+    image: postgres:12.1-alpine
+    profiles:
+      - prod
+      - dev
+    restart: always
+    ports:
+      - "5434:5432"
+    env_file:
+      - ./.env
+
+volumes:
+  postgres-db:
+
+
+  # voiads-service-prod:
+  #   build:
+  #     context: ./src
+  #     dockerfile: ./Dockerfile
+  #     target: production
+  #   image: voiads-app-server-image-prod
+  #   container_name: voiads-app-server-container-prod
+  #   profiles:
+  #     - prod
+  #   restart: always
+  #   networks:
+  #     - voiads_network
+  #   env_file:
+  #     - ./.env
+  #   environment:
+  #     - PORT=${PORT}
+  #   ports:
+  #     - "${PORT}:8001"
+  #   depends_on:
+  #     - postgres-db
+  #   links:
+  #     - postgres-db
