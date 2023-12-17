@@ -1,10 +1,9 @@
 FROM python:3.11-slim as base
 
-RUN apt-get update && apt-get install -y ffmpeg
-
 WORKDIR /
 RUN mkdir /logs
-RUN mkdir -p /static/audio
+
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 
 # Copy the requirements.txt file to the container
 COPY ./requirements.txt /
@@ -20,7 +19,7 @@ FROM base as development
 # Copy your application code into the container
 COPY . .
 
-CMD ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8001", "--reload", "--reload-dir", "/app", "--access-log"]
+CMD ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8002", "--reload", "--reload-dir", "/app", "--access-log"]
 
 ### PRODUCTION ###
 FROM base as production

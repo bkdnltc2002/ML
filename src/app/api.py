@@ -1,41 +1,79 @@
-from .db.seed_data import seed_data
+
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from .constants.config import settings
-from .db.database import Base, engine
-from .routers.audio_router import router as audio_router
-from .routers.auth_router import router as auth_router
-from .routers.car_router import router as car_router
-from .routers.performance_router import router as performance_router
-from .routers.playlist_audio_router import router as playlist_audio_router
-from .routers.playlist_router import router as playlist_router
-from .routers.user_router import router as user_router
-from .db.database import get_db
-from .routers.inquiry_router import router as inquiry_router
-from .routers.brand_router import router as brand_router
-from fastapi.staticfiles import StaticFiles
+# from .face_recognition import music
 import os
+import av
+import cv2 
+import numpy as np 
+import mediapipe as mp 
+from keras.models import load_model
+import keyboard
+import psutil
 
-db = Depends(get_db)
-Base.metadata.create_all(bind=engine)
+PREFIX = f"/ml/v1"
 
-PREFIX = f"/api/{settings.API_VERSION}"
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(current_dir, 'face_recognition', 'model.h5')
+model = load_model(model_path)
+label = np.load(os.path.join(current_dir, 'face_recognition', 'labels.npy'))
+holistic = mp.solutions.holistic
+hands = mp.solutions.hands
+holis = holistic.Holistic()
+drawing = mp.solutions.drawing_utils
+
+def recording():
+    data_size = 0
+    cap =cv2.VideoCapture(0)
+    pred = None
+    while True:
+        print("heeee")
+        _, frm = cap.read()
+        frm = cv2.flip(frm, 1)
+
+        res = holis.process(cv2.cvtColor(frm, cv2.COLOR_BGR2RGB))
+        
+        lst = []
+            
+        if res.face_landmarks:
+            for i in res.face_landmarks.landmark:
+                lst.append(i.x - res.face_landmarks.landmark[1].x)
+                lst.append(i.y - res.face_landmarks.landmark[1].y)
+
+            data_size = data_size+1
+        print(data_size)
+    
+        lst = np.array(lst).reshape(1,-1)
+
+        pred = label[np.argmax(model.predict(lst))]
+
+        print(pred)
+        cv2.putText(frm, pred, (50,50),cv2.FONT_ITALIC, 1, (255,0,0),2)
+
+                
+        drawing.draw_landmarks(frm, res.face_landmarks, holistic.FACEMESH_TESSELATION,
+                                    landmark_drawing_spec=drawing.DrawingSpec(color=(0,0,255), thickness=-1, circle_radius=1),
+                                    connection_drawing_spec=drawing.DrawingSpec(thickness=1))
+
+
+        cv2.imshow("window",frm)
+
+        if cv2.waitKey(1) == 27 or data_size >29:
+            # with open('emotion.txt','w') as f:
+            # 	f.write(str(pred))
+            # cv2.destroyAllWindows()
+            # cap.release()
+            # return pred
+            break
+    cv2.destroyAllWindows()
+    cap.release()
+    return pred
+    
 app = FastAPI(
     openapi_url=f"{PREFIX}/openapi.json",
     docs_url=f"{PREFIX}/docs",
     redoc_url=f"{PREFIX}/redoc",
-)
-app.mount(
-    "/static",
-    StaticFiles(
-        directory=os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..")
-        )
-        + "/static",
-        html=False,
-    ),
-    name="static",
 )
 app.add_middleware(
     CORSMiddleware,
@@ -45,30 +83,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include the router
-app.include_router(
-    auth_router, tags=["Authenication"], prefix=f"{PREFIX}/auth"
-)
-app.include_router(user_router, tags=["User"], prefix=f"{PREFIX}/user")
-app.include_router(audio_router, tags=["Audio"], prefix=f"{PREFIX}/audio")
-app.include_router(
-    playlist_router, tags=["Playlist"], prefix=f"{PREFIX}/playlist"
-)
-app.include_router(
-    playlist_audio_router,
-    tags=["Playlist Audio"],
-    prefix=f"{PREFIX}/playlist-audio",
-)
-app.include_router(car_router, tags=["Car"], prefix=f"{PREFIX}/car")
-app.include_router(
-    performance_router, tags=["Performance"], prefix=f"{PREFIX}/performance"
-)
-app.include_router(
-    inquiry_router, tags=["Inquiry"], prefix=f"{PREFIX}/inquiry"
-)
-app.include_router(
-    brand_router, tags=["Brand"], prefix=f"{PREFIX}/brand"
-)
-@app.on_event("startup")
-async def startup_event():
-    seed_data()
+@app.get("/face_recognition") 
+async def read_face_recognition():
+    return recording()
