@@ -1,10 +1,9 @@
 [tool.poetry]
-name = "voiads-app-server"
+name = "app"
 version = "0.0.0"
-description = "Voiads project"
+description = "VocalWave project"
 readme = "README.md"
 authors = ["Tam Kieu <tamkieu4299@gmail.com>"]
-packages = [{include = "zone_1_backend"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"

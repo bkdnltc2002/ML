@@ -1,0 +1,7 @@
+fastapi
+av
+opencv-python
+numpy
+mediapipe
+keyboard
+tensorflow
