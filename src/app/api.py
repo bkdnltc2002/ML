@@ -60,11 +60,6 @@ def recording():
         cv2.imshow("window",frm)
 
         if cv2.waitKey(1) == 27 or data_size >29:
-            # with open('emotion.txt','w') as f:
-            # 	f.write(str(pred))
-            # cv2.destroyAllWindows()
-            # cap.release()
-            # return pred
             break
     cv2.destroyAllWindows()
     cap.release()
