@@ -13,7 +13,7 @@ label = np.load("labels.npy")
 holistic = mp.solutions.holistic
 hands = mp.solutions.hands
 holis = holistic.Holistic()
-drawing = mp.solutions.drawing_utils
+#drawing = mp.solutions.drawing_utils
 cap =cv2.VideoCapture(0)
 data_size = 0
 
@@ -43,9 +43,9 @@ def recording(model, label):
 		cv2.putText(frm, pred, (50,50),cv2.FONT_ITALIC, 1, (255,0,0),2)
 
 				
-		drawing.draw_landmarks(frm, res.face_landmarks, holistic.FACEMESH_TESSELATION,
-									landmark_drawing_spec=drawing.DrawingSpec(color=(0,0,255), thickness=-1, circle_radius=1),
-									connection_drawing_spec=drawing.DrawingSpec(thickness=1))
+		#drawing.draw_landmarks(frm, res.face_landmarks, holistic.FACEMESH_TESSELATION,
+		#							landmark_drawing_spec=drawing.DrawingSpec(color=(0,0,255), thickness=-1, circle_radius=1),
+		#							connection_drawing_spec=drawing.DrawingSpec(thickness=1))
 
 
 		cv2.imshow("window",frm)
